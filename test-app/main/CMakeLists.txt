@@ -25,7 +25,7 @@ idf_component_register(
         "main.swift"
         "TestPlatform.swift"
     INCLUDE_DIRS "."
-    REQUIRES esp-swift-platform esp-swift-support
+    REQUIRES esp-swift-platform
 )
 
 swift_configure(
