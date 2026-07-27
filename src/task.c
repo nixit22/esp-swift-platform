@@ -31,7 +31,7 @@ typedef struct NotifyIsrArg_t
     eNotifyAction action;    /*!< Action to perform on the task notification */
 } NotifyIsrArg_t;
 
-void *taskNotifyIrsArgsAllocate(TaskHandle_t taskHandle, uint32_t value, eNotifyAction action)
+void *taskNotifyIsrArgsAllocate(TaskHandle_t taskHandle, uint32_t value, eNotifyAction action)
 {
     NotifyIsrArg_t *args = (NotifyIsrArg_t *)heap_caps_malloc(sizeof(NotifyIsrArg_t), MALLOC_CAP_INTERNAL);
     if (args == NULL)

@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-void *eventGroupIrsArgsAllocate(EventGroupHandle_t eventGroup, uint32_t bitsToSet);
+void *eventGroupIsrArgsAllocate(EventGroupHandle_t eventGroup, uint32_t bitsToSet);
 void eventGroupIsrHandler(void *arg);
 
 #ifdef __cplusplus

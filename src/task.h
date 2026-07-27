@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-void *taskNotifyIrsArgsAllocate(TaskHandle_t taskHandle, uint32_t value, eNotifyAction action);
+void *taskNotifyIsrArgsAllocate(TaskHandle_t taskHandle, uint32_t value, eNotifyAction action);
 void taskNotifyIsrHandler(void *arg);
 
 #ifdef __cplusplus

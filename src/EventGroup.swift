@@ -93,7 +93,7 @@ public struct EventGroup<EventBits>: ~Copyable where EventBits: OptionSet, Event
     /// - Parameter events: The event bits to set when the handler is called.
     /// - Returns: An `IsrHandler` instance that can be used to set the event bits from an ISR.
     public borrowing func isrHandler(setting events: EventBits...) -> IsrHandler {
-        guard let args = eventGroupIrsArgsAllocate(eventGroup, EventBits_t(events)) else {
+        guard let args = eventGroupIsrArgsAllocate(eventGroup, EventBits_t(events)) else {
             fatalError("EventGroup ISR args allocation failed: out of memory")
         }
         return IsrHandler(handler: eventGroupIsrHandler, args: args)
