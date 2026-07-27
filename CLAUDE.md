@@ -10,7 +10,7 @@ Depends on: `SwiftSupport`
 |---|---|---|
 | `error.c` / `error.h` | `Error.swift` | `Error` enum, `esp_err_t.throwEspError()`, `esp_err_t.abortOnError()`, `BaseType_t.throwFreeRtosError()` |
 | `log.c` / `log.h` | `Logger.swift` | `Logger(tag:)` |
-| `tick_type.c` / `tick_type.h` | `TickType.swift` | `TickType_t(ms:)` — `nil` → `portMAX_DELAY` |
+| — | `TickType.swift` | `TickType_t(ms:)` — `nil` → `portMAX_DELAY` |
 | `event_group.c` / `event_group.h` | `EventGroup.swift` | `EventGroup<EventBits: OptionSet>` |
 | `task.c` / `task.h` | `Task.swift` | `Task` (class) |
 | — | `IsrHandler.swift` | `IsrHandler` (~Copyable struct) |

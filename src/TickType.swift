@@ -26,10 +26,32 @@ extension TickType_t {
     /// Create a `TickType_t` from an optional millisecond duration.
     ///
     /// - Parameter ms: Milliseconds to convert. Use `nil` for an indefinite delay.
-    /// - Note: Conversion uses `pdMS_TO_TICKS(ms)`. `nil` maps to `portMAX_DELAY`.
+    /// - Note: `nil` maps to `portMAX_DELAY`.
     public init(ms: UInt32?) {
         if let ms {
-            self = pdMS_TO_TICKS(ms)
+            // Equivalent to pdMS_TO_TICKS, done here instead of via a C shim
+            // because pdMS_TO_TICKS is function-like (can't bridge into Swift)
+            // while configTICK_RATE_HZ is a plain constant (can). pdMS_TO_TICKS
+            // itself multiplies in TickType_t (uint32_t on this port) before
+            // dividing and silently wraps for large ms.
+            //
+            // configTICK_RATE_HZ is fixed for the process lifetime (an IDF
+            // Kconfig value baked in at build time), so this branch always
+            // resolves the same way and the compiler folds it accordingly.
+            let hz = UInt32(configTICK_RATE_HZ)
+            if 1000 % hz == 0 {
+                // Tick period is a whole number of ms: exact conversion, no
+                // multiply, safe across the full UInt32 ms range.
+                self = ms / (1000 / hz)
+            } else {
+                // hz doesn't divide 1000 evenly: this branch is compiled out
+                // entirely for hz values that do (confirmed in the emitted
+                // RISC-V for this project's configTICK_RATE_HZ=100), so there's
+                // no cost to keeping it simple here — multiply in UInt64 and
+                // saturate instead of wrapping.
+                let ticks = (UInt64(ms) * UInt64(hz)) / 1000
+                self = TickType_t(Swift.min(ticks, UInt64(TickType_t.max)))
+            }
         } else {
             self = portMAX_DELAY
         }

@@ -26,7 +26,6 @@ idf_component_register(
         src/Error.swift
         src/log.c
         src/Logger.swift
-        src/tick_type.c
         src/TickType.swift
         src/event_group.c
         src/EventGroup.swift
