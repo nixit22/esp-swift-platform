@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+private let log = Logger(tag: "Task")
+
 public final class Task {
     private var entry: (() -> Void)?
 
@@ -29,6 +31,16 @@ public final class Task {
 
     public func run(name: String, stackSize: UInt32, priority: UInt32, entry: @escaping () -> Void) throws(Error) {
         self.entry = entry
+        // Not a data race despite `handle` being written here (creator thread) and
+        // nil'd below (new task's thread): xTaskCreate writes `*pxCreatedTask`
+        // inside prvInitialiseNewTask, which always completes *before*
+        // prvAddNewTaskToReadyList runs — and that function gates task visibility
+        // behind taskENTER_CRITICAL()/taskEXIT_CRITICAL() (a real SMP spinlock
+        // barrier). The new task cannot be scheduled on any core, and therefore
+        // cannot reach the `task.handle = nil` below, until after that barrier
+        // publishes this write. Verified against FreeRTOS-Kernel-SMP/tasks.c
+        // (xTaskCreate -> prvCreateTask -> prvAddNewTaskToReadyList).
+        let ptr = Unmanaged.passRetained(self).toOpaque()
         try xTaskCreate(
             {
                 // Convert the raw pointer to a managed Swift reference and
@@ -40,8 +52,14 @@ public final class Task {
                 }
                 // Drop to here so `task` is released by ARC, then delete the RTOS task.
                 vTaskDelete(nil)
-            }, name, stackSize, Unmanaged.passRetained(self).toOpaque(), priority, &handle)
-            .throwFreeRtosError()
+            }, name, stackSize, ptr, priority, &handle)
+            .throwFreeRtosError { rc in
+                // xTaskCreate failed before the task ever started, so the entry
+                // closure's takeRetainedValue() never ran to balance passRetained
+                // above — release manually or `self` leaks forever.
+                log.e("xTaskCreate(\(name)) failed: \(rc)")
+                Unmanaged<Task>.fromOpaque(ptr).release()
+            }
     }
 
     public func notify() {
