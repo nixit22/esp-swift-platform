@@ -106,6 +106,5 @@
 // ----------------------------------------------------------------------------
 #include "log.h"
 #include "error.h"
-#include "tick_type.h"
 #include "event_group.h"
 #include "task.h"
