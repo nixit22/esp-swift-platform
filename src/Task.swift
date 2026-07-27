@@ -142,7 +142,7 @@ public final class Task {
         guard let handle = handle else {
             fatalError("Task must be run before calling notifyIsrHandler")
         }
-        guard let args = taskNotifyIrsArgsAllocate(
+        guard let args = taskNotifyIsrArgsAllocate(
             handle, notificationBits.reduce(0) { $0 | $1.rawValue }, eSetBits)
         else {
             fatalError("Task notify ISR args allocation failed: out of memory")

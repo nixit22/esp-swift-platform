@@ -30,7 +30,7 @@ typedef struct EventGroupIsrArg_t
     EventBits_t bitsToSet;
 } EventGroupIsrArg_t;
 
-void *eventGroupIrsArgsAllocate(EventGroupHandle_t eventGroup, uint32_t bitsToSet)
+void *eventGroupIsrArgsAllocate(EventGroupHandle_t eventGroup, uint32_t bitsToSet)
 {
     EventGroupIsrArg_t *args = (EventGroupIsrArg_t *)heap_caps_malloc(sizeof(EventGroupIsrArg_t), MALLOC_CAP_INTERNAL);
     if (args == NULL)
