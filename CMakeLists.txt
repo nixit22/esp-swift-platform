@@ -33,6 +33,7 @@ idf_component_register(
         src/Task.swift
         src/platform.c
         src/IsrHandler.swift
+        src/System.swift
 
     PRIV_INCLUDE_DIRS "src"
     PRIV_REQUIRES esp-swift-support
