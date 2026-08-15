@@ -14,6 +14,7 @@ Depends on: `SwiftSupport`
 | `event_group.c` / `event_group.h` | `EventGroup.swift` | `EventGroup<EventBits: OptionSet>` |
 | `task.c` / `task.h` | `Task.swift` | `Task` (class) |
 | — | `IsrHandler.swift` | `IsrHandler` (~Copyable struct) |
+| — | `System.swift` | `restart() -> Never` — typed-`Never` wrapper over `esp_restart()` |
 | `platform.c` / `platform.h` | — | IntelliSense stub only — imports the umbrella header |
 
 ## Usage examples
@@ -47,3 +48,5 @@ task.notify(MyEvents.ready)
 **Logger compile-time guards** — `CMakeLists.txt` translates `CONFIG_LOG_MAXIMUM_LEVEL` into per-level `-DLOG_<LEVEL>_ENABLED` Swift flags. Guard log calls with `#if LOG_INFO_ENABLED` etc. so unused levels compile away. `@inline(__always)` on Logger methods ensures the guard is zero-cost.
 
 **`platform.c`** exists only as an IntelliSense/Clang compilation stub. It imports the umbrella header so the IDE can resolve symbols; it contains no runtime logic.
+
+**`restart()`** exists because `esp_restart()`'s C declaration is `__attribute__((noreturn))`, but this Embedded Swift toolchain does not import that as a Swift `-> Never` return type (confirmed empirically — code calling raw `esp_restart()` followed by unreachable statements did not get flagged/optimized as such). `restart()` calls it and then traps in a `vTaskDelay`-based loop (not a busy `while true {}`) so callers get real `Never` typing without spinning the CPU while `esp_restart()`'s own deferred shutdown sequence runs.
