@@ -8,7 +8,7 @@ Depends on: `SwiftSupport`
 
 | C file | Swift file | Public type |
 |---|---|---|
-| `error.c` / `error.h` | `Error.swift` | `Error` enum, `esp_err_t.throwEspError()`, `esp_err_t.abortOnError()`, `BaseType_t.throwFreeRtosError()` |
+| `error.c` / `error.h` | `PlatformError.swift` | `PlatformError` enum, `esp_err_t.throwEspError()`, `esp_err_t.abortOnError()`, `BaseType_t.throwFreeRtosError()` |
 | `log.c` / `log.h` | `Logger.swift` | `Logger(tag:)` |
 | — | `TickType.swift` | `TickType_t(ms:)` — `nil` → `portMAX_DELAY` |
 | `event_group.c` / `event_group.h` | `EventGroup.swift` | `EventGroup<EventBits: OptionSet>` |
@@ -37,7 +37,7 @@ task.notify(MyEvents.ready)
 
 ## Non-obvious patterns
 
-**`Error`** is a two-case enum: `.espError(esp_err_t)` and `.freeRtosError(Int32)`. Two patterns on `esp_err_t`: `throwEspError()` throws (for runtime failures); `abortOnError()` calls `fatalError()` (for boot-time driver inits that must not fail). Both accept an optional callback for logging before the throw/abort. `throwFreeRtosError()` is on `BaseType_t`.
+**`PlatformError`** is a two-case enum: `.espError(esp_err_t)` and `.freeRtosError(Int32)`. Two patterns on `esp_err_t`: `throwEspError()` throws (for runtime failures); `abortOnError()` calls `fatalError()` (for boot-time driver inits that must not fail). Both accept an optional callback for logging before the throw/abort. `throwFreeRtosError()` is on `BaseType_t`.
 
 **`EventGroup`** is `~Copyable` (noncopyable struct) — it owns the FreeRTOS handle and calls `vEventGroupDelete` in `deinit`. `wait()` and `set()` use `borrowing` to avoid triggering the consume checker.
 

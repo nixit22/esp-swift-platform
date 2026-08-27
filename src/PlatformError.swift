@@ -22,12 +22,12 @@
 
 import ESP_Platform
 
-public enum Error: Swift.Error {
+public enum PlatformError: Swift.Error {
     case espError(esp_err_t)
     case freeRtosError(Int32)
 }
 
-extension Error {
+extension PlatformError {
     public var name: String {
         switch self {
         case .espError(let code):
@@ -51,10 +51,10 @@ extension esp_err_t {
         }
     }
 
-    public func throwEspError(_ cb: ((esp_err_t) -> Void)? = nil) throws(Error) {
+    public func throwEspError(_ cb: ((esp_err_t) -> Void)? = nil) throws(PlatformError) {
         if self != ESP_OK {
             cb?(self)
-            throw Error.espError(self)
+            throw PlatformError.espError(self)
         }
     }
 
@@ -67,10 +67,10 @@ extension esp_err_t {
 }
 
 extension BaseType_t {
-    public func throwFreeRtosError(_ cb: ((BaseType_t) -> Void)? = nil) throws(Error) {
+    public func throwFreeRtosError(_ cb: ((BaseType_t) -> Void)? = nil) throws(PlatformError) {
         if self != pdPASS {
             cb?(self)
-            throw Error.freeRtosError(self)
+            throw PlatformError.freeRtosError(self)
         }
     }
 }

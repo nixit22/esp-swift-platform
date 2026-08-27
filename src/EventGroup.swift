@@ -47,7 +47,7 @@ public struct EventGroup<EventBits>: ~Copyable where EventBits: OptionSet, Event
     /// Creates a new event group.
     ///
     /// - Returns: An `EventGroup` instance if creation succeeds
-    public init() throws(Error) {
+    public init() throws(PlatformError) {
         guard let eventGroup = xEventGroupCreate() else {
             throw .freeRtosError(errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY)
         }

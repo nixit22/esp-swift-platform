@@ -27,7 +27,7 @@ func app_main() {
             log.i("event received")
         }
         // No explicit cleanup — deinit calls vEventGroupDelete when `eg` goes out of scope.
-    } catch let error as Platform.Error {
+    } catch let error as PlatformError {
         log.e("error: \(error.name)")
     }
 }
