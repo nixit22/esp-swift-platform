@@ -23,7 +23,7 @@
 idf_component_register(
     SRCS
         src/error.c
-        src/Error.swift
+        src/PlatformError.swift
         src/log.c
         src/Logger.swift
         src/TickType.swift
