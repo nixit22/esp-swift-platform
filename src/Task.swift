@@ -29,7 +29,7 @@ public final class Task {
     public init() {
     }
 
-    public func run(name: String, stackSize: UInt32, priority: UInt32, entry: @escaping () -> Void) throws(Error) {
+    public func run(name: String, stackSize: UInt32, priority: UInt32, entry: @escaping () -> Void) throws(PlatformError) {
         self.entry = entry
         // Not a data race despite `handle` being written here (creator thread) and
         // nil'd below (new task's thread): xTaskCreate writes `*pxCreatedTask`
