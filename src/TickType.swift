@@ -23,6 +23,19 @@
 /// The initializer below converts an optional millisecond value into a
 /// `TickType_t` (RTOS ticks). Passing `nil` yields `portMAX_DELAY`.
 extension TickType_t {
+    /// The current RTOS tick count.
+    ///
+    /// - Note: Call from ISR context via ``nowFromISR`` instead — this wraps
+    ///   `xTaskGetTickCount()`, which is not ISR-safe.
+    public static var now: TickType_t {
+        xTaskGetTickCount()
+    }
+
+    /// The current RTOS tick count, safe to call from ISR context.
+    public static var nowFromISR: TickType_t {
+        xTaskGetTickCountFromISR()
+    }
+
     /// Create a `TickType_t` from an optional millisecond duration.
     ///
     /// - Parameter ms: Milliseconds to convert. Use `nil` for an indefinite delay.
