@@ -23,7 +23,6 @@
 idf_component_register(
     SRCS
         "main.swift"
-        "TestPlatform.swift"
     INCLUDE_DIRS "."
     REQUIRES esp-swift-platform
 )
