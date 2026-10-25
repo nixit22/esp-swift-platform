@@ -20,7 +20,5 @@
  * SOFTWARE.
  */
 
-module ESP_Platform [system] {
-    umbrella header "src/platform.h"
-    export *
-}
+// This file exists to provide IntelliSense context for ESP_Platform.h.
+#include "ESP_Platform.h"

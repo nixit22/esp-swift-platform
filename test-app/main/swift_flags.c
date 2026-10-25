@@ -20,5 +20,5 @@
  * SOFTWARE.
  */
 
-// This file exists to provide IntelliSense context for platform.h.
-#include "platform.h"
+// Empty: ESP-IDF compiles it with the C flags of the main component, which
+// swift_package() gives to SwiftPM (esp-swift-support/cmake/swift_build.py).

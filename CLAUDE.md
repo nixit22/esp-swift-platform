@@ -4,6 +4,8 @@ Swift wrappers for FreeRTOS and ESP-IDF primitives. Swift module name: **`Platfo
 
 Depends on: `SwiftSupport`
 
+SwiftPM package: C glue in `Sources/ESP_Platform/` (headers in `include/`, umbrella header `ESP_Platform.h`), Swift in `Sources/Platform/`. Built by `swift_package()` (esp-swift-support).
+
 ## Source files
 
 | C file | Swift file | Public type |
@@ -68,7 +70,7 @@ func app_main() { mainTask.run() }
 
 **`IsrHandler`** is a `~Copyable` struct. Its `deinit` calls `heap_caps_free(args)` to release the C-allocated args struct. Functions that only read `handler`/`args` should take it as `borrowing IsrHandler`. Never call arbitrary Swift code from the ISR — only install `handler.handler` / `handler.args` into the driver registration API.
 
-**Logger compile-time guards** — `CMakeLists.txt` translates `CONFIG_LOG_MAXIMUM_LEVEL` into per-level `-DLOG_<LEVEL>_ENABLED` Swift flags. Guard log calls with `#if LOG_INFO_ENABLED` etc. so unused levels compile away. `@inline(__always)` on Logger methods ensures the guard is zero-cost.
+**Logger compile-time guards** — esp-swift-support's `swift_build.py` translates `CONFIG_LOG_MAXIMUM_LEVEL` into per-level `LOG_<LEVEL>_ENABLED` Swift conditions. Guard log calls with `#if LOG_INFO_ENABLED` etc. so unused levels compile away. `@inline(__always)` on Logger methods ensures the guard is zero-cost.
 
 **`platform.c`** exists only as an IntelliSense/Clang compilation stub. It imports the umbrella header so the IDE can resolve symbols; it contains no runtime logic.
 
