@@ -81,23 +81,6 @@ public struct EventGroup<EventBits>: ~Copyable where EventBits: OptionSet, Event
     public borrowing func set(_ events: EventBits...) {
         xEventGroupSetBits(eventGroup, EventBits_t(events))
     }
-
-    /// Creates an ISR handler that sets the specified event bits when called from an interrupt.
-    ///
-    /// Use this method to create a handler that can be installed in an ISR to set event bits without
-    /// the restrictions of ISR-safe functions.
-    ///
-    /// - Important: The returned `IsrHandler` captures the raw `eventGroup` handle, not a reference
-    ///   to `self`. The caller must ensure this `EventGroup` outlives both the `IsrHandler` and the
-    ///   ISR registration that installs it — the handler does not keep the event group alive.
-    /// - Parameter events: The event bits to set when the handler is called.
-    /// - Returns: An `IsrHandler` instance that can be used to set the event bits from an ISR.
-    public borrowing func isrHandler(setting events: EventBits...) -> IsrHandler {
-        guard let args = eventGroupIsrArgsAllocate(eventGroup, EventBits_t(events)) else {
-            fatalError("EventGroup ISR args allocation failed: out of memory")
-        }
-        return IsrHandler(handler: eventGroupIsrHandler, args: args)
-    }
 }
 
 extension EventBits_t {

@@ -51,7 +51,7 @@ func app_main() {
 }
 ```
 
-See [`CLAUDE.md`](CLAUDE.md) for the full type list (`Task`, `IsrHandler`, `TickType_t.init(ms:)`) and non-obvious patterns.
+See [`CLAUDE.md`](CLAUDE.md) for the full type list (`Task`, `TickType_t.init(ms:)`) and non-obvious patterns.
 
 ## License
 

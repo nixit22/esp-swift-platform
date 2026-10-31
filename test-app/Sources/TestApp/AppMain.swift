@@ -83,7 +83,7 @@ private let mainTask = MainTask {
     }
 
     // Not covered above: the no-arg notify()/notifier() path, the array-form overloads, and
-    // notifyIsrHandler (which needs a real ISR source to test meaningfully, not available here).
+    // isrNotify (which needs a real ISR source to test meaningfully, not available here).
     logger.i("All selected tests finished")
 }
 

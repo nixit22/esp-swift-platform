@@ -106,5 +106,3 @@
 // ----------------------------------------------------------------------------
 #include "log.h"
 #include "error.h"
-#include "event_group.h"
-#include "task.h"
