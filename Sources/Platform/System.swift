@@ -29,5 +29,5 @@
 /// sequence (deferred via a task/timer) runs to completion.
 public func restart() -> Never {
     esp_restart()
-    while true { vTaskDelay(TickType_t(ms: 1_000)) }
+    while true { Task.delay(ms: 1_000) }
 }

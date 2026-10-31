@@ -188,6 +188,22 @@ public final class Task: TaskProtocol {
             }
     }
 
+    /// Blocks the **calling** task (not any particular `Task` object) for `ms` milliseconds
+    /// (`vTaskDelay`).
+    ///
+    /// This is **not** a guaranteed minimum: `ms` is rounded down to whole ticks and the delay
+    /// starts mid-tick, so the real wait can be up to two tick periods shorter than `ms` (a
+    /// delay that converts to zero ticks is just a yield). It is the caller's responsibility to
+    /// pass a long enough value: for a required minimum `S`, use the next multiple of the tick
+    /// period at or above `S + tickPeriod` (e.g. 50 ms for 40 ms at 100 Hz). See
+    /// ``TickType_t/init(ms:)``.
+    ///
+    /// - Parameter ms: Milliseconds to block for.
+    @inline(__always)
+    public static func delay(ms: UInt32) {
+        vTaskDelay(TickType_t(ms: ms))
+    }
+
     /// Blocks the **calling** task (not any particular `Task` object) until it has a pending
     /// notification, returning the accumulated raw bits and clearing them. `nil` blocks forever.
     ///
