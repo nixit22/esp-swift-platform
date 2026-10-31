@@ -26,7 +26,7 @@ private let log = Logger(tag: "Task")
 ///
 /// Only the two members below are actual requirements — each is the single point where a
 /// conformer must touch its own private task handle. Every typed, public-facing overload
-/// (`notify()`, the `OptionSet` overloads, `notifier()`, the typed `notifyIsrHandler` overloads)
+/// (`notify()`, `isrNotify()`, the `OptionSet` overloads, `notifier()`)
 /// is a shared default implementation in the extension below, built on top of these two.
 ///
 public protocol TaskProtocol: AnyObject {
@@ -34,9 +34,8 @@ public protocol TaskProtocol: AnyObject {
     /// blocked in `Task.waitNotification()`.
     func notify(_ events: UInt32)
 
-    /// Registers an ISR-safe notification target for the given raw bits. See the typed
-    /// `notifyIsrHandler(_:)` overloads below for the public entry points.
-    func notifyIsrHandler(_ events: UInt32) -> IsrHandler
+    /// ISR-safe form of `notify(_:)`. Lives in IRAM.
+    func isrNotify(_ events: UInt32)
 }
 
 extension TaskProtocol {
@@ -58,18 +57,31 @@ extension TaskProtocol {
         notify(notificationBits)
     }
 
+    /// ISR-safe form of `notify()`. Inlined into the caller, so it must itself be IRAM-resident.
+    @inline(__always)
+    public func isrNotify() {
+        isrNotify(0)
+    }
+
+    /// ISR-safe form of `notify(_:[NotificationBits])`.
+    @inline(__always)
+    public func isrNotify<NotificationBits>(_ notificationBits: [NotificationBits])
+    where NotificationBits: OptionSet, NotificationBits.RawValue == UInt32 {
+        isrNotify(notificationBits.reduce(0) { $0 | $1.rawValue })
+    }
+
+    /// Variadic form of `isrNotify(_:[NotificationBits])`.
+    @inline(__always)
+    public func isrNotify<NotificationBits>(_ notificationBits: NotificationBits...)
+    where NotificationBits: OptionSet, NotificationBits.RawValue == UInt32 {
+        isrNotify(notificationBits)
+    }
+
     /// Returns a callable that wakes this task with a plain "wake up now" notification (no
     /// bits) whenever it's invoked — for handing to code that shouldn't hold a full `Task`/
     /// `MainTask` reference, just permission to notify it.
     public func notifier() -> TaskNotifier {
         TaskNotifier(task: self)
-    }
-
-    /// Registers an ISR-safe notification target for a plain "wake up now" notification (no
-    /// bits set). See `notifyIsrHandler(_:UInt32)` for the underlying mechanism and its
-    /// lifetime caveat.
-    public func notifyIsrHandler() -> IsrHandler {
-        notifyIsrHandler(0)
     }
 
     /// Returns a callable that wakes this task with `notificationBits` set whenever it's invoked.
@@ -82,20 +94,6 @@ extension TaskProtocol {
     public func notifier<NotificationBits>(_ notificationBits: NotificationBits...) -> TaskEventsNotifier
     where NotificationBits: OptionSet, NotificationBits.RawValue == UInt32 {
         notifier(notificationBits)
-    }
-
-    /// Registers an ISR-safe notification target that sets every bit in `notificationBits` when
-    /// triggered from interrupt context. See `notifyIsrHandler(_:UInt32)` for the underlying
-    /// mechanism and its lifetime caveat.
-    public func notifyIsrHandler<NotificationBits>(_ notificationBits: [NotificationBits]) -> IsrHandler
-    where NotificationBits: OptionSet, NotificationBits.RawValue == UInt32 {
-        notifyIsrHandler(notificationBits.reduce(0) { $0 | $1.rawValue })
-    }
-
-    /// Variadic form of `notifyIsrHandler(_:[NotificationBits])`.
-    public func notifyIsrHandler<NotificationBits>(_ notificationBits: NotificationBits...) -> IsrHandler
-    where NotificationBits: OptionSet, NotificationBits.RawValue == UInt32 {
-        notifyIsrHandler(notificationBits)
     }
 }
 
@@ -211,23 +209,20 @@ public final class Task: TaskProtocol {
         return NotificationBits(rawValue: notifyValue)
     }
 
+    /// `TaskProtocol` witness. No-ops if `run()` hasn't succeeded yet. If this wakes a task of
+    /// higher priority than the interrupted one, a context switch is requested on ISR exit.
+    @section(".iram1.Task-isrNotify")
+    public func isrNotify(_ events: UInt32) {
+        guard let handle else { return }
+        var woken: BaseType_t = 0
+        xTaskGenericNotifyFromISR(handle, 0, events, eSetBits, nil, &woken)
+        if woken != 0 { vPortYieldFromISR() }
+    }
+
     /// `TaskProtocol` witness — see its doc comment. No-ops if `run()` hasn't succeeded yet.
     public func notify(_ events: UInt32) {
         guard let handle else { return }
         xTaskGenericNotify(handle, 0, events, eSetBits, nil)
-    }
-
-    /// - Important: The returned `IsrHandler` captures the raw FreeRTOS task handle, not a reference
-    ///   to `self`. The caller must ensure this `Task` outlives both the `IsrHandler` and the ISR
-    ///   registration that installs it — the handler does not keep the task alive.
-    public func notifyIsrHandler(_ events: UInt32) -> IsrHandler {
-        guard let handle else {
-            fatalError("Task must be run before calling notifyIsrHandler")
-        }
-        guard let args = taskNotifyIsrArgsAllocate(handle, events, eSetBits) else {
-            fatalError("Task notify ISR args allocation failed: out of memory")
-        }
-        return IsrHandler(handler: taskNotifyIsrHandler, args: args)
     }
 }
 
@@ -274,12 +269,12 @@ public final class MainTask: TaskProtocol {
         xTaskGenericNotify(handle, 0, events, eSetBits, nil)
     }
 
-    /// `TaskProtocol` witness — see its doc comment, and `Task.notifyIsrHandler(_:)`'s note about
-    /// the returned handler capturing the raw task handle, not `self`.
-    public func notifyIsrHandler(_ events: UInt32) -> IsrHandler {
-        guard let args = taskNotifyIsrArgsAllocate(handle, events, eSetBits) else {
-            fatalError("Task notify ISR args allocation failed: out of memory")
-        }
-        return IsrHandler(handler: taskNotifyIsrHandler, args: args)
+    /// `TaskProtocol` witness. If this wakes a task of higher priority than the interrupted one,
+    /// a context switch is requested on ISR exit.
+    @section(".iram1.MainTask-isrNotify")
+    public func isrNotify(_ events: UInt32) {
+        var woken: BaseType_t = 0
+        xTaskGenericNotifyFromISR(handle, 0, events, eSetBits, nil, &woken)
+        if woken != 0 { vPortYieldFromISR() }
     }
 }
