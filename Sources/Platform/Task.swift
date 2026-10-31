@@ -97,6 +97,16 @@ extension TaskProtocol {
     }
 }
 
+/// Anything that can be invoked to wake a fixed target task: `TaskNotifier` (plain wake-up) and
+/// `TaskEventsNotifier` (wake-up with bits). Lets code take "a notifier" without knowing which.
+///
+/// Accept it as a generic (`some Notifier`): Embedded Swift has no existentials for struct
+/// conformers.
+public protocol Notifier {
+    /// Wakes the bound task.
+    func callAsFunction()
+}
+
 /// A callable that wakes a fixed target task with a plain "wake up now" notification. Bind it
 /// once via `task.notifier()` and hand it to code that shouldn't hold a full task reference.
 public struct TaskNotifier {
@@ -224,6 +234,24 @@ public final class Task: TaskProtocol {
         guard let handle else { return }
         xTaskGenericNotify(handle, 0, events, eSetBits, nil)
     }
+
+    /// Suspends this task (`vTaskSuspend`): the scheduler skips it until `resume()` is called.
+    /// Notifications and timeouts don't wake a suspended task. No-ops if `run()` hasn't succeeded
+    /// yet.
+    ///
+    /// Suspends don't nest: one `resume()` undoes any number of `suspend()` calls. To wake a task
+    /// that is waiting for an event, prefer `notify()`.
+    public func suspend() {
+        guard let handle else { return }
+        vTaskSuspend(handle)
+    }
+
+    /// Resumes a task suspended with `suspend()` (`vTaskResume`). Has no effect on a task that
+    /// isn't suspended. No-ops if `run()` hasn't succeeded yet.
+    public func resume() {
+        guard let handle else { return }
+        vTaskResume(handle)
+    }
 }
 
 /// Wraps ESP-IDF's own "main" task — the one that calls `app_main()` — as a `TaskProtocol`, so
@@ -278,3 +306,6 @@ public final class MainTask: TaskProtocol {
         if woken != 0 { vPortYieldFromISR() }
     }
 }
+
+extension TaskNotifier: Notifier {}
+extension TaskEventsNotifier: Notifier {}
