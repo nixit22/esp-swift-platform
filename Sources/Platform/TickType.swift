@@ -40,6 +40,12 @@ extension TickType_t {
     ///
     /// - Parameter ms: Milliseconds to convert. Use `nil` for an indefinite delay.
     /// - Note: `nil` maps to `portMAX_DELAY`.
+    /// - Important: The conversion rounds down to whole ticks, like `pdMS_TO_TICKS`. A relative
+    ///   RTOS delay or timeout built from it also starts mid-tick, so it can expire up to one
+    ///   tick early on top of that: the real wait is only guaranteed to exceed
+    ///   `(floor(ms / tickPeriodMs) - 1) * tickPeriodMs` (at 100 Hz, 15 ms may return almost
+    ///   immediately). Ensuring a minimum wait is the caller's job: for a required minimum `S`,
+    ///   pass the next multiple of the tick period at or above `S + tickPeriodMs`.
     public init(ms: UInt32?) {
         if let ms {
             // Equivalent to pdMS_TO_TICKS, done here instead of via a C shim
